@@ -5,20 +5,13 @@ var jwt = require('jsonwebtoken');
 var config = require('../config.js');
 var Number = require('../models/Number.js');
 const MAX_UPDATE = 5000;
-
+var interval;
 router.get('/receive', function(req,res,next){
   var number = req.query.number;
-  var end = req.query.end;
   var token = req.query.token;
-  var interval;
   jwt.verify(token, config.secret, function(err, decoded){
     if (!err) {
-      if (!end) {
-        interval = setInterval(receiveFunc(number),5000);
-      } else {
-        clearInterval(interval);
-        endFunc(number);
-      }
+      interval = setInterval(receiveFunc(number),5000);
     } else {
       var response = {
         status : 'reauth',
@@ -42,6 +35,7 @@ function receiveFunc(number, res) {
           status : 'alert',
           message : 'sending SMS'
         };
+        clearInterval(interval);
       } else {
         response = {
           status : 'ok',
@@ -54,6 +48,7 @@ function receiveFunc(number, res) {
        status : 'error',
        message : 'did not work: ' + err
      };
+     clearInterval(interval);
    }
    res.status(200).send(response);
   });
