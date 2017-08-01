@@ -9,9 +9,25 @@ var interval;
 router.get('/receive', function(req,res,next){
   var number = req.query.number;
   var token = req.query.token;
+  var first = req.query.first;
   jwt.verify(token, config.secret, function(err, decoded){
     if (!err) {
-      interval = setInterval(receiveFunc(number),5000);
+      var isFirst = (first === 'True');
+      if (isFirst) {
+        interval = setInterval(function() {receiveFunc(number,res);},5000);
+        var response = {
+          status : 'ok',
+          message : 'interval set',
+        };
+        res.status(200).send(response);
+      } else {
+        var response = {
+          status : 'ok',
+          message : 'number updated',
+        };
+        res.status(200).send(response);
+      }
+      updateNumber(number, isFirst);
     } else {
       var response = {
         status : 'reauth',
@@ -22,25 +38,38 @@ router.get('/receive', function(req,res,next){
   });
 });
 
+function updateNumber(number, first) {
+  console.log("updating number")
+  Number.findOne({'number' : number},function(err,num){
+    num.pings = first ? 0 : (num.pings + 1);
+    num.updatedAt = new Date();
+    num.save(function(err) {
+      if (err) {
+        console.log("could not update pings");
+      }
+    });
+  });
+}
+
 function receiveFunc(number, res) {
   Number.findOne({'number' : number},function(err,num){
     var response;
     if (!err) {
       var update = num.updatedAt;
       var curr = new Date();
-      var timepassed = update.getTime() - curr.getTime();
+      var timepassed = curr.getTime() - update.getTime();
+      console.log("timepassed = " + timepassed);
+      console.log("num pings = " + num.pings);
       if (timepassed > MAX_UPDATE && num.pings !== 0) {
-        sendSMS(number);
+        console.log("time is bad");
+        sendSMS(number,res);
         response = {
           status : 'alert',
           message : 'sending SMS'
         };
         clearInterval(interval);
       } else {
-        response = {
-          status : 'ok',
-          message : 'update good'
-        };
+        console.log("time is good");
       }
    } else {
      console.log(err);
@@ -49,8 +78,8 @@ function receiveFunc(number, res) {
        message : 'did not work: ' + err
      };
      clearInterval(interval);
+     res.status(200).send(response);
    }
-   res.status(200).send(response);
   });
 }
 

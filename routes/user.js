@@ -23,18 +23,18 @@ function registerUser(number,password,firstName,lastName, res) {
   User.create(user,function(err, u){
      var response;
      if (!err) {
-        createNumber(number,res);
+        createNumber(number,user,res);
      } else {
        response = {
          status : 'error',
          message : 'could not register: ' + err
        };
+       res.status(200).send(response);
      }
-     res.status(200).send(response);
   });
 }
 
-function createNumber(number, res) {
+function createNumber(number, user, res) {
   var num = {
     number : number
   };
@@ -65,29 +65,35 @@ router.post('/login', function(req,res,next){
 function loginUser(number,password,res) {
   var response;
   User.findOne({'number' : number}, function(err, u){
-    var hash = u.password;
+    if (err) {
+      console.log(err);
+    }
+    var hash = u === null ? "" : u.password;
     var success = passhash.verify(password,hash);
     if (success) {
       jwt.sign(u, config.secret, {expiresIn: 432000}, function(err, token){
         if (!err) {
+          console.log("we good");
           response = {
             status : 'ok',
             message : 'logged in successfully',
             token : token
           };
         } else {
+          console.log("token signing failed");
           response = {
             status : 'error',
             message : 'token signing failed' + err
           };
         }
+        res.status(200).send(response);
       });
-      res.status(200).send(response);
     } else {
+      console.log("invalid creds");
       response = {
         status : 'error',
         message : 'invalid number or password'
-      }
+      };
       res.status(200).send(response);
     }
   });

@@ -1,16 +1,20 @@
 
 var twilio = require('twilio');
 var config = require('../config.js');
-var client = new twilio(config.testAccountSid, config.testAuthToken);
+var client = new twilio(config.liveAccountSid, config.liveAuthToken);
 
 module.exports = function() {
-  this.sendSMS = function(number) {
+  this.sendSMS = function(number,res) {
     var twilioNumber = '+18482602680';
+    console.log("sending sms to : " + number);
     client.messages.create({
-        body: 'Hello from Node',
+        body: 'Your laptop has stopped broadcasting, please check on it immediately',
         to: number,
         from: twilioNumber
-      })
-      .then((message) => console.log(message.sid));
+      }, function(err, message){
+        if (err) {
+          console.log(err.message);
+        }
+      });
     }
 }
