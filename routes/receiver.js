@@ -10,9 +10,11 @@ router.get('/receive', function(req,res,next){
   var number = req.query.number;
   var token = req.query.token;
   var first = req.query.first;
+  var end = req.query.end;
   jwt.verify(token, config.secret, function(err, decoded){
     if (!err) {
       var isFirst = (first === 'True');
+      var isEnd = (end === 'True');
       if (isFirst) {
         interval = setInterval(function() {receiveFunc(number,res);},5000);
         var response = {
@@ -23,11 +25,12 @@ router.get('/receive', function(req,res,next){
       } else {
         var response = {
           status : 'ok',
-          message : 'number updated',
+          message : (isEnd ? 'manually cancelled' : 'number updated')
         };
         res.status(200).send(response);
       }
-      updateNumber(number, isFirst);
+      var reset = isFirst || isEnd;
+      updateNumber(number, reset);
     } else {
       var response = {
         status : 'reauth',
@@ -63,13 +66,13 @@ function receiveFunc(number, res) {
       if (timepassed > MAX_UPDATE && num.pings !== 0) {
         console.log("time is bad");
         sendSMS(number,res);
-        response = {
-          status : 'alert',
-          message : 'sending SMS'
-        };
         clearInterval(interval);
       } else {
-        console.log("time is good");
+        if (num.pings === 0) {
+          clearInterval(interval);
+        } else {
+          console.log("time is good");
+        }
       }
    } else {
      console.log(err);

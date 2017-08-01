@@ -9,16 +9,13 @@ var User = require('../models/User.js');
 router.post('/register',function(req,res,next){
   var number = req.body.number;
   var password = req.body.password;
-  var firstName = req.body.firstName;
-  var lastName = req.body.lastName;
-  registerUser(number, password, firstName, lastName, res);
+  registerUser(number, password,res);
 });
 
-function registerUser(number,password,firstName,lastName, res) {
+function registerUser(number,password,res) {
   var user = {
     number : number,
-    password : passhash.generate(password),
-    fullname : (firstName + ' ' + lastName)
+    password : passhash.generate(password)
   };
   User.create(user,function(err, u){
      var response;
