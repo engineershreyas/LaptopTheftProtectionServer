@@ -19,7 +19,7 @@ app.use(cookieParser());
 var http = require('http').Server(app);
 
 var mongoose = require('mongoose');
-mongoose.connect(config.localDatabase, function(err){
+mongoose.connect(config.remoteDatabase, function(err){
   if (err) {
     console.log('unable to connect to mongodb');
     return;
